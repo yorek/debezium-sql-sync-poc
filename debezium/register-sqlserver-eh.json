@@ -15,6 +15,7 @@
         "transforms.Reroute.type": "io.debezium.transforms.ByLogicalTableRouter",
         "transforms.Reroute.topic.regex": "(.*)",
         "transforms.Reroute.topic.replacement": "tpch",          
+        "tombstones.on.delete": false,
         "database.history":"io.debezium.relational.history.MemoryDatabaseHistory"
     }
 }

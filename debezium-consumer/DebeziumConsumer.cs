@@ -15,7 +15,7 @@ namespace Debezium.Consumer
 {
     interface IPayloadProcessor
     {
-        string Process();
+        void Process();
     }
 
     class PayloadSource
@@ -30,16 +30,23 @@ namespace Debezium.Consumer
         private JObject Json;
         public JObject After => (JObject)(Json["payload"]["after"]);
         public JObject Before => (JObject)(Json["payload"]["before"]);
-
+        public PayloadSource SourceMetadata;
         private Dictionary<string, string> _schema = new Dictionary<string, string>();
+
+        private long _baseLSN = 0;
+        private string _sqlConnectionString = ConfigurationManager.AppSettings["AzureSQLConnectionString"];
 
         public PayloadProcessorBase(JObject json)
         {
             this.Json = json;
             LoadSchema();
+            LoadSourceMetadata();
+
+            string baseLSNHex = ConfigurationManager.AppSettings["BaseLSN"];
+            _baseLSN = Convert.ToInt64(baseLSNHex.Replace("0x", ""), 16);
         }
 
-        public PayloadSource GetPayloadSource()
+        public void LoadSourceMetadata()
         {
             var payload = this.Json["payload"];
 
@@ -50,15 +57,14 @@ namespace Debezium.Consumer
                 CommitLSN = Convert.ToInt64(payload["source"]["commit_lsn"].ToString().Replace(":", ""), 16)
             };
 
-            return result;
+            this.SourceMetadata = result;
         }
 
-        public virtual string Process()
-        {
-            return string.Empty;
+        public virtual void Process()
+        {            
         }
 
-        public void LoadSchema()
+        protected void LoadSchema()
         {
             JArray schema = (JArray)(this.Json["schema"]["fields"][0]["fields"]);
 
@@ -72,7 +78,7 @@ namespace Debezium.Consumer
             }
         }
 
-        public string GetSQLValue(JProperty property)
+        protected string GetSQLValue(JProperty property)
         {
             string result = property.Value.ToString();
             string debeziumType = _schema[property.Name];
@@ -103,14 +109,19 @@ namespace Debezium.Consumer
             return result;
         }
 
-        public void WriteToAzureSQL(string command)
-        {
-            //Console.WriteLine("Applying...");
-            string sqlConnectionString = ConfigurationManager.AppSettings["AzureSQLConnectionString"];
-            using (var conn = new SqlConnection(sqlConnectionString))
+        protected void WriteToAzureSQL(string command)
+        {                        
+            if (SourceMetadata.CommitLSN > _baseLSN)
             {
-                int rows = conn.Execute(command);
-                Console.WriteLine($"Affected Rows: {rows}");
+                Console.WriteLine($"Transaction Commit LSN {SourceMetadata.CommitLSN:X} is greater than base LSN {_baseLSN:X}. Applying...");
+                Console.WriteLine(command);
+                using (var conn = new SqlConnection(_sqlConnectionString))
+                {
+                    //int rows = conn.Execute(command);
+                    //Console.WriteLine($"Affected Rows: {rows}");
+                }
+            } else {
+                Console.WriteLine($"Transaction Commit LSN {SourceMetadata.CommitLSN:X} is greater than base LSN {_baseLSN:X}. Skipping.");
             }
         }
     }
@@ -119,9 +130,9 @@ namespace Debezium.Consumer
     {
         public UpdatePayloadProcessor(JObject json): base(json) {}
 
-        public override string Process()
+        public override void Process()
         {
-            var source = GetPayloadSource();            
+            var source = this.SourceMetadata;            
 
             var sb = new StringBuilder();
             sb.Append($"UPDATE [{source.Schema}].[{source.Table}] SET ");
@@ -158,7 +169,9 @@ namespace Debezium.Consumer
             }
             sb.Append(string.Join(" AND ", fieldsDelete));
 
-            return sb.ToString();
+            string sqlCommand = sb.ToString();
+
+            WriteToAzureSQL(sqlCommand);
         }
     }
 
@@ -166,9 +179,9 @@ namespace Debezium.Consumer
     {
         public CreatePayloadProcessor(JObject json): base(json) {}
 
-        public override string Process()
+        public override void Process()
         {
-            var source = GetPayloadSource();
+            var source = this.SourceMetadata;       
             var after = this.After;
 
             var sb = new StringBuilder();
@@ -194,7 +207,9 @@ namespace Debezium.Consumer
 
             sb.Append(")");
 
-            return sb.ToString();
+            string sqlCommand = sb.ToString();
+
+            WriteToAzureSQL(sqlCommand);
         }
     }
 
@@ -202,9 +217,9 @@ namespace Debezium.Consumer
     {
         public DeletePayloadProcessor(JObject json): base(json) {}
 
-        public override string Process()
+        public override void Process()
         {
-            var source = GetPayloadSource();
+            var source = this.SourceMetadata;       
             var before = this.Before;
 
             var sb = new StringBuilder();
@@ -220,7 +235,9 @@ namespace Debezium.Consumer
             }
             sb.Append(string.Join(" AND ", fields));
 
-            return sb.ToString();
+            string sqlCommand = sb.ToString();
+
+            WriteToAzureSQL(sqlCommand);
         }
     }
 
@@ -267,18 +284,8 @@ namespace Debezium.Consumer
                 var operation = json["payload"]["op"].ToString();
 
                 var processor = PayloadProcessorFactory.CreatePayloadProcessor(operation, json);
-                var result = processor.Process();
-                Console.WriteLine($"{result}");
+                processor.Process();
 
-                processor.WriteToAzureSQL(result);
-
-                //var schema = payload["source"]["schema"].ToString();
-                //var table = payload["source"]["table"].ToString();
-
-                Console.WriteLine();
-
-                //Console.WriteLine("Done.");
-                //Console.WriteLine();                
                 await Task.Yield();
             }
         }
@@ -292,7 +299,7 @@ namespace Debezium.Consumer
         public void Configure()
         {
             Console.WriteLine("Validating settings...");
-            foreach (string option in new string[] { "EventHubConnectionString", "AzureSQLConnectionString" })
+            foreach (string option in new string[] { "EventHubConnectionString", "AzureSQLConnectionString", "BaseLSN" })
             {
                 if (string.IsNullOrEmpty(ConfigurationManager.AppSettings?[option]))
                 {
