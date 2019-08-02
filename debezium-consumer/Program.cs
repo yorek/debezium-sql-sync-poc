@@ -12,10 +12,11 @@ namespace Debezium.Consumer
     {
         public static async Task Main(string[] args)
         {
+            Console.WriteLine("Creating Debzium Consumer...");
             var consumer = new DebeziumConsumer();
             consumer.Configure();
 
-            Console.WriteLine("Dequeuing messages...");
+            Console.WriteLine("Starting Consumer...");
             var cts = new CancellationTokenSource();
             var task = Task.Factory.StartNew(MessageLoop,
                 (consumer, cts.Token),

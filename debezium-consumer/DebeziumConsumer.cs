@@ -44,17 +44,25 @@ namespace Debezium.Consumer
         {
             Console.WriteLine("The application will now start to listen for incoming message.");
 
+            var startPosition = EventPosition.FromStart();
+            if (ConfigurationManager.AppSettings["LastOffset"] != null)
+            {
+                string lastOffset = ConfigurationManager.AppSettings["LastOffset"];
+                startPosition = EventPosition.FromOffset(lastOffset, inclusive: false);
+                Console.WriteLine($"Starting from Offset: {lastOffset}");
+            }
+
             var runtimeInfo = await client.GetRuntimeInformationAsync();
             Console.WriteLine("Creating receiver handlers...");
             var utcNow = DateTime.UtcNow;
             //var startPosition = EventPosition.FromEnqueuedTime(utcNow);
-            var startPosition = EventPosition.FromStart();
+            
             var receivers = runtimeInfo.PartitionIds
                 .Select(pid =>
                 {
                     var receiver = client.CreateReceiver("$Default", pid, startPosition);
                     Console.WriteLine("Created receiver for partition '{0}'.", pid);
-                    receiver.SetReceiveHandler(new PartitionReceiver());
+                    receiver.SetReceiveHandler(new PartitionReceiver(pid));
                     return receiver;
                 })
                 .ToList();

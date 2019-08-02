@@ -112,10 +112,11 @@ namespace Debezium.Consumer
                 {
                     //int rows = conn.Execute(command);
                     //Console.WriteLine($"Affected Rows: {rows}");
-                }
+                    Utils.SaveSetting("LastLSN", "0x" + SourceMetadata.CommitLSN.ToString("X"));                 
+                }                
             } else {
                 Console.WriteLine($"Transaction Commit LSN {SourceMetadata.CommitLSN:X} is greater than base LSN {_baseLSN:X}. Skipping.");
             }
-        }
+        }        
     }
 }

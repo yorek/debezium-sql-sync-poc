@@ -10,6 +10,6 @@ from
 	sys.dm_db_partition_stats ps 
 inner join
 	sys.tables t on t.object_id = ps.object_id
-where 
-	ps.index_id = 0
+--where 
+	--ps.index_id = 0
 go

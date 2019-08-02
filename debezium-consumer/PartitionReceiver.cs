@@ -16,8 +16,9 @@ namespace Debezium.Consumer
         int _maxBatchSize = 1;
         public int MaxBatchSize { get => _maxBatchSize; set => _maxBatchSize = value; }
 
-        public PartitionReceiver()
+        public PartitionReceiver(string partitionId)
         {
+            Console.WriteLine($"Partition receiver {partitionId} ready and listening...");
         }
 
         public Task ProcessErrorAsync(Exception error)
@@ -41,6 +42,8 @@ namespace Debezium.Consumer
 
                 var processor = JsonProcessorFactory.CreatePayloadProcessor(operation, json);
                 processor.Process();
+
+                Utils.SaveSetting("LastOffset", e.SystemProperties.Offset);
 
                 await Task.Yield();
             }
