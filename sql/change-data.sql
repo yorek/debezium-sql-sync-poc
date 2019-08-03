@@ -18,7 +18,7 @@ update dbo.CUSTOMER set C_COMMENT = 'Comment 5' where C_CUSTKEY = 9900001
 update dbo.CUSTOMER set C_COMMENT = 'Comment 6' where C_CUSTKEY = 9900001
 
 begin tran
-	update dbo.CUSTOMER set C_COMMENT = 'Final Comment' where C_CUSTKEY = 9900001
+	update dbo.CUSTOMER set C_COMMENT = 'Another Final Comment' where C_CUSTKEY = 130000
 commit
 
 delete from dbo.NATION where N_NATIONKEY >= 99
