@@ -1,4 +1,4 @@
-use TPC-H
+use TPCH
 
 update dbo.NATION set N_COMMENT = 'Another Test' where N_NATIONKEY = 99
 update dbo.REGION set R_COMMENT = 'Another Test' where R_REGIONKEY = 99
