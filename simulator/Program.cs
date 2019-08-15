@@ -54,23 +54,15 @@ namespace simulator
 
         static void CreateCustomer()
         {
-            Console.WriteLine("Creating new customer");
+            //Console.WriteLine("Creating new customer");
             using (var conn = new SqlConnection(SQLConnectionString)) {
 
-                var faker = new Faker();
-                // Console.WriteLine(1500000);
-                // Console.WriteLine(faker.Company.CompanyName());
-                // Console.WriteLine(faker.Address.FullAddress());
-                // Console.WriteLine(faker.Random.Int(0, 24));
-                // Console.WriteLine(faker.Phone.PhoneNumber("##-###-###-####"));
-                // Console.WriteLine(faker.Random.Decimal(100, 10000));
-                // Console.WriteLine(faker.Random.ArrayElement(new string[] {"AUTOMOBILE", "BUILDING", "FURNITURE", "HOUSEHOLD", "MACHINERY"}));
-                // Console.WriteLine(faker.Lorem.Sentence(10));
+                var faker = new Faker();              
                 
                 conn.Execute(
                      "INSERT INTO dbo.CUSTOMER ([C_CUSTKEY], [C_NAME], [C_ADDRESS], [C_NATIONKEY], [C_PHONE], [C_ACCTBAL], [C_MKTSEGMENT], [C_COMMENT]) VALUES (@CUSTKEY, @NAME, @ADDRESS, @NATIONKEY, @PHONE, @ACCTBAL, @MKTSEGMENT, @COMMENT)",
                      new {
-                        @CUSTKEY = 1500000, 
+                        @CUSTKEY = 9999999, 
                         @NAME = CutToMaxLength(faker.Company.CompanyName(), 25),
                         @ADDRESS = CutToMaxLength(faker.Address.FullAddress(), 40),
                         @NATIONKEY = faker.Random.Int(0, 24),
