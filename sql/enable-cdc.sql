@@ -1,28 +1,3 @@
-use TPCH
-GO
-
-/*
-	STEP 0
-*/
-EXEC sys.sp_cdc_enable_db
-GO
-
-select 'EXEC sys.sp_cdc_enable_table N''' + schema_name(schema_id) + ''', N''' + [name] + ''', @index_name = ''IX1'', role_name=null, @supports_net_changes=1' 
-from sys.tables
-where type = 'U'
-GO
-
-EXEC sys.sp_cdc_enable_table N'dbo', N'NATION', @role_name=null, @supports_net_changes=0
-EXEC sys.sp_cdc_enable_table N'dbo', N'REGION', @role_name=null, @supports_net_changes=0
-EXEC sys.sp_cdc_enable_table N'dbo', N'PART', @role_name=null, @supports_net_changes=0
-EXEC sys.sp_cdc_enable_table N'dbo', N'SUPPLIER', @role_name=null, @supports_net_changes=0
-EXEC sys.sp_cdc_enable_table N'dbo', N'PARTSUPP', @role_name=null, @supports_net_changes=0
-EXEC sys.sp_cdc_enable_table N'dbo', N'CUSTOMER', @role_name=null, @supports_net_changes=0
-EXEC sys.sp_cdc_enable_table N'dbo', N'ORDERS', @role_name=null, @supports_net_changes=0
-EXEC sys.sp_cdc_enable_table N'dbo', N'LINEITEM', @role_name=null, @supports_net_changes=0
-
-EXEC sys.sp_cdc_help_change_data_capture
-GO
 
 /* 
 	STEP 1
@@ -47,14 +22,6 @@ select * from cdc.dbo_REGION_CT
 select * from cdc.dbo_NATION_CT
 select * from cdc.dbo_CUSTOMER_CT
 
-/*
-	STEP 2
-*/
-CREATE DATABASE TPCH_SS1 ON
-(NAME = 'TPCH_sys', FILENAME = 'D:\_mssql\MSSQL14.MSSQLSERVER\MSSQL\DATA\TPCH_sys_mdf.ss1'),
-(NAME = 'TPCH_data', FILENAME = 'D:\_mssql\MSSQL14.MSSQLSERVER\MSSQL\DATA\TPCH_data_ndf.ss1')
-AS SNAPSHOT OF TPCH
-GO
 
 /*
 	STEP 3 TO 5
