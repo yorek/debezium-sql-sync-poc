@@ -1,0 +1,1 @@
+mssql-scripter.bat -S localhost -d TPCH --exclude-schemas cdc --exclude-foreign-keys --exclude-indexes      --exclude-primary-keys --exclude-unique-keys --target-server-version AzureDB --display-progress  > tpch.ddl.sql

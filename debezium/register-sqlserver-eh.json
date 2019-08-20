@@ -2,10 +2,10 @@
     "name": "tpch",
     "config": {
         "connector.class" : "io.debezium.connector.sqlserver.SqlServerConnector",
-        "database.hostname" : "192.168.0.80",
+        "database.hostname" : "51.143.5.152",
         "database.port" : "1433",
-        "database.user" : "debezium",
-        "database.password" : "StrongNewPassw0rd!",
+        "database.user" : "debezium-tpch",
+        "database.password" : "debezium-TPCH-P@ssw0rd!",
         "database.dbname" : "tpch",
         "database.server.name" : "laptop",
         "tasks.max" : "1",                
