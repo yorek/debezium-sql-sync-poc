@@ -10,10 +10,6 @@ namespace Simulator
 {
     class Program
     {
-        private static readonly string SQLConnectionString = "Server=localhost;Initial Catalog=TPCH;Integrated Security=SSPI;";
-
-        private static Faker Faker;
-
         static void Main(string[] args)
         {
             int taskCount = 1;

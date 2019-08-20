@@ -42,6 +42,7 @@ namespace Simulator
 
         private void CreateCustomer()
         {
+            Console.WriteLine($"{DateTime.Now:O} Creating Customer...");
             using (var conn = new SqlConnection(SQLConnectionString))
             {
 
@@ -65,6 +66,7 @@ namespace Simulator
 
         private void CreateOrder()
         {
+            Console.WriteLine($"{DateTime.Now:O} Creating Order...");
             var cid = Faker.Random.Int(1, CustomerId);
 
             using (var conn = new SqlConnection(SQLConnectionString))
@@ -91,6 +93,8 @@ namespace Simulator
 
         private void UpdateCustomer()
         {
+            Console.WriteLine($"{DateTime.Now:O} Updating Customer...");
+
             var cid = Faker.Random.Int(1, CustomerId);
 
             using (var conn = new SqlConnection(SQLConnectionString))
