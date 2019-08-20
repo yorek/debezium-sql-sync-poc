@@ -42,11 +42,11 @@ namespace Simulator
 
         private void CreateCustomer()
         {
-            Console.WriteLine($"{DateTime.Now:O} Creating Customer...");
+            Console.WriteLine($"{DateTime.Now:O} Creating Customer {CustomerId}...");
+
             using (var conn = new SqlConnection(SQLConnectionString))
             {
-
-                conn.Execute(
+                var affectedRows = conn.Execute(
                      "INSERT INTO dbo.CUSTOMER ([C_CUSTKEY], [C_NAME], [C_ADDRESS], [C_NATIONKEY], [C_PHONE], [C_ACCTBAL], [C_MKTSEGMENT], [C_COMMENT]) VALUES (@CUSTKEY, @NAME, @ADDRESS, @NATIONKEY, @PHONE, @ACCTBAL, @MKTSEGMENT, @COMMENT)",
                      new
                      {
@@ -60,19 +60,21 @@ namespace Simulator
                          @COMMENT = CutToMaxLength(Faker.Lorem.Sentence(5), 100)
                      });
 
+                Console.WriteLine($"Affected Rows: {affectedRows}");
+
                 CustomerId += 1;
             }
         }
 
         private void CreateOrder()
-        {
-            Console.WriteLine($"{DateTime.Now:O} Creating Order...");
+        {            
             var cid = Faker.Random.Int(1, CustomerId);
+
+            Console.WriteLine($"{DateTime.Now:O} Creating Order {OrderId}...");
 
             using (var conn = new SqlConnection(SQLConnectionString))
             {
-
-                conn.Execute(@"INSERT INTO dbo.ORDERS ([O_ORDERKEY], [O_CUSTKEY], [O_ORDERSTATUS], [O_TOTALPRICE], [O_ORDERDATE], [O_ORDERPRIORITY], [O_CLERK], [O_SHIPPRIORITY], [O_COMMENT])
+                var affectedRows = conn.Execute(@"INSERT INTO dbo.ORDERS ([O_ORDERKEY], [O_CUSTKEY], [O_ORDERSTATUS], [O_TOTALPRICE], [O_ORDERDATE], [O_ORDERPRIORITY], [O_CLERK], [O_SHIPPRIORITY], [O_COMMENT])
                         VALUES (@ORDERKEY, @CUSTKEY, @ORDERSTATUS, @TOTALPRICE, @ORDERDATE, @ORDERPRIORITY, @CLERK, @SHIPPRIORITY, @COMMENT)",
                      new
                      {
@@ -87,19 +89,21 @@ namespace Simulator
                          @COMMENT = CutToMaxLength(Faker.Lorem.Sentence(5), 100)
                      });
 
+                Console.WriteLine($"Affected Rows: {affectedRows}");
+
                 OrderId += 1;
             }
         }
 
         private void UpdateCustomer()
         {
-            Console.WriteLine($"{DateTime.Now:O} Updating Customer...");
-
             var cid = Faker.Random.Int(1, CustomerId);
+
+            Console.WriteLine($"{DateTime.Now:O} Updating Customer {cid}...");
 
             using (var conn = new SqlConnection(SQLConnectionString))
             {
-                conn.Execute("UPDATE dbo.CUSTOMER SET [C_NAME] = @NAME, [C_ADDRESS] = @ADDRESS, [C_NATIONKEY] = @NATIONKEY, [C_PHONE] = @PHONE, [C_ACCTBAL] = @ACCTBAL, [C_MKTSEGMENT] = @MKTSEGMENT, [C_COMMENT] = @COMMENT WHERE C_CUSTKEY = @CUSTKEY",
+                var affectedRows = conn.Execute("UPDATE dbo.CUSTOMER SET [C_NAME] = @NAME, [C_ADDRESS] = @ADDRESS, [C_NATIONKEY] = @NATIONKEY, [C_PHONE] = @PHONE, [C_ACCTBAL] = @ACCTBAL, [C_MKTSEGMENT] = @MKTSEGMENT, [C_COMMENT] = @COMMENT WHERE C_CUSTKEY = @CUSTKEY",
                 new
                 {
                     @CUSTKEY = cid,
@@ -111,6 +115,8 @@ namespace Simulator
                     @MKTSEGMENT = Faker.Random.ArrayElement(new string[] { "AUTOMOBILE", "BUILDING", "FURNITURE", "HOUSEHOLD", "MACHINERY" }),
                     @COMMENT = CutToMaxLength(Faker.Lorem.Sentence(5), 100)
                 });
+
+                Console.WriteLine($"Affected Rows: {affectedRows}");
             }
         }
 
