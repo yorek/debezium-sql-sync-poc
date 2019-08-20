@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using Newtonsoft.Json.Linq;
+using System.Data;
 using System.Data.SqlClient;
+using Dapper;
 
 namespace Debezium.Consumer
 {
@@ -73,7 +75,7 @@ namespace Debezium.Consumer
 
         protected string GetSQLValue(JProperty property)
         {
-            string result = property.Value.ToString();
+            string result = property.Value.ToString().Replace("'", "''");
             string debeziumType = _schema[property.Name];
 
             if (string.IsNullOrEmpty(_schema[property.Name])) // not a debezium data type
@@ -102,7 +104,14 @@ namespace Debezium.Consumer
             return result;
         }
 
-        protected void WriteToAzureSQL(string command)
+        protected void WriteToAzureSQL(string command) 
+        {
+            var noParams = new Dictionary<string, string>();
+
+            WriteToAzureSQL(command, noParams);
+        }
+
+        protected void WriteToAzureSQL(string command, Dictionary<string, string> sqlParams)
         {                        
             if (SourceMetadata.CommitLSN > _baseLSN)
             {
@@ -110,12 +119,20 @@ namespace Debezium.Consumer
                 Console.WriteLine(command);
                 using (var conn = new SqlConnection(_sqlConnectionString))
                 {
-                    //int rows = conn.Execute(command);
-                    //Console.WriteLine($"Affected Rows: {rows}");
+                    var dp = new DynamicParameters();
+                    
+                    foreach(var p in sqlParams)
+                    {
+                        dp.Add(p.Key, p.Value);                        
+                    }                    
+
+                    int rows = conn.Execute(command, dp, commandType: CommandType.Text);
+
+                    Console.WriteLine($"Affected Rows: {rows}");
                     Utils.SaveSetting("LastLSN", "0x" + SourceMetadata.CommitLSN.ToString("X"));                 
                 }                
             } else {
-                Console.WriteLine($"Transaction Commit LSN {SourceMetadata.CommitLSN:X} is greater than base LSN {_baseLSN:X}. Skipping.");
+                Console.WriteLine($"Transaction Commit LSN {SourceMetadata.CommitLSN:X} is smaller than or equale to base LSN {_baseLSN:X}. Skipping.");
             }
         }        
     }
