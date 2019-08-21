@@ -15,11 +15,11 @@ namespace Simulator
             int taskCount = 1;
 
             var tasks = new List<Task>();
-            var simulator = new TPCHSimulator();
 
             Console.WriteLine($"Creating {taskCount} simulator instances");
             foreach(var n in Enumerable.Range(1, taskCount))
             {   
+                var simulator = new TPCHSimulator(n, "Server=localhost;Initial Catalog=TPCH1GB;Integrated Security=SSPI;");
                 tasks.Add(Task.Run(() => simulator.SimulateActivity()));
             }
             Console.WriteLine($"Done. Ctrl+C to terminate.");

@@ -11,19 +11,32 @@ namespace Simulator
 {
     class TPCHSimulator
     {
-        private readonly string SQLConnectionString = "Server=localhost;Initial Catalog=TPCH;Integrated Security=SSPI;";
+        private readonly string SQLConnectionString = "";
 
         private readonly Random Random = new Random();
 
         private readonly Faker Faker = new Faker();
 
-        private volatile int CustomerId = 2000000;
+        private readonly int MinCustomerId = 2000000;
 
-        private volatile int OrderId = 70000000;
+        private readonly int MinOrderId = 70000000;
 
-        public TPCHSimulator()
+        private volatile int CustomerId = 0;
+
+        private volatile int OrderId = 0;
+
+        private readonly int SimulatorId;
+
+        public TPCHSimulator(int id, string connectionString)        
         {
             Randomizer.Seed = new Random();
+
+            this.CustomerId = MinCustomerId;
+            this.OrderId = MinOrderId;
+            this.SimulatorId = id;
+            this.SQLConnectionString = connectionString;
+
+            Log("Simulator created");
         }
 
         public void SimulateActivity()
@@ -33,8 +46,9 @@ namespace Simulator
                 var num = (int)(Math.Round(Random.NextDouble() * 1000, 0));
 
                 if (num <= 500) CreateCustomer();
-                if (num > 500 && num <= 600) UpdateCustomer();
-                if (num > 600 && num <= 900) CreateOrder();
+                if (num > 500 && num <= 600) DeleteCustomer();
+                if (num > 600 && num <= 700) UpdateCustomer();                
+                if (num > 700 && num <= 900) CreateOrder();
 
                 Thread.Sleep(5000);
             }
@@ -42,7 +56,7 @@ namespace Simulator
 
         private void CreateCustomer()
         {
-            Console.WriteLine($"{DateTime.Now:O} Creating Customer {CustomerId}...");
+            Log($"Creating Customer {CustomerId}...");
 
             using (var conn = new SqlConnection(SQLConnectionString))
             {
@@ -60,7 +74,7 @@ namespace Simulator
                          @COMMENT = CutToMaxLength(Faker.Lorem.Sentence(5), 100)
                      });
 
-                Console.WriteLine($"Affected Rows: {affectedRows}");
+                Log($"Affected Rows: {affectedRows}");
 
                 CustomerId += 1;
             }
@@ -70,7 +84,7 @@ namespace Simulator
         {            
             var cid = Faker.Random.Int(1, CustomerId);
 
-            Console.WriteLine($"{DateTime.Now:O} Creating Order {OrderId}...");
+            Log($"Creating Order {OrderId}...");
 
             using (var conn = new SqlConnection(SQLConnectionString))
             {
@@ -89,7 +103,7 @@ namespace Simulator
                          @COMMENT = CutToMaxLength(Faker.Lorem.Sentence(5), 100)
                      });
 
-                Console.WriteLine($"Affected Rows: {affectedRows}");
+                Log($"Affected Rows: {affectedRows}");
 
                 OrderId += 1;
             }
@@ -97,9 +111,9 @@ namespace Simulator
 
         private void UpdateCustomer()
         {
-            var cid = Faker.Random.Int(1, CustomerId);
+            var cid = Faker.Random.Int(MinCustomerId, CustomerId);
 
-            Console.WriteLine($"{DateTime.Now:O} Updating Customer {cid}...");
+            Log($"Updating Customer {cid}...");
 
             using (var conn = new SqlConnection(SQLConnectionString))
             {
@@ -116,7 +130,7 @@ namespace Simulator
                     @COMMENT = CutToMaxLength(Faker.Lorem.Sentence(5), 100)
                 });
 
-                Console.WriteLine($"Affected Rows: {affectedRows}");
+                Log($"Affected Rows: {affectedRows}");
             }
         }
 
@@ -126,6 +140,24 @@ namespace Simulator
             {
                 conn.Execute("");
             }
+        }
+
+        private void DeleteCustomer()
+        {
+           var cid = Faker.Random.Int(MinCustomerId, CustomerId);
+
+            Log($"Deleting Customer {cid}...");
+
+            using (var conn = new SqlConnection(SQLConnectionString))
+            {
+                var affectedRows = conn.Execute("DELETE dbo.CUSTOMER WHERE C_CUSTKEY = @CUSTKEY",
+                new
+                {
+                    @CUSTKEY = cid,
+                });
+
+                Log($"Affected Rows: {affectedRows}");
+            } 
         }
 
         private void UpdateLineItem()
@@ -142,6 +174,11 @@ namespace Simulator
                 return text.Substring(0, length);
             else
                 return text;
+        }
+
+        private void Log(string text)
+        {
+            Console.WriteLine($"{DateTime.Now:o}|{SimulatorId:000}|{text}");
         }
     }
 }
