@@ -8,8 +8,11 @@ export DEBEZIUM_VERSION=0.10
 echo "deploying resource group"
 az group create -n dbsync1 -l WestUS2
 
-echo "deploying eventhubs"
+echo "deploying eventhubs namespace"
 az eventhubs namespace create -g dbsync1 -n debezium --enable-kafka=true -l WestUS2
+
+echo "deploying eventhubs changestream eventhub"
+az eventhubs eventhub create -g dbsync1 -n debezium_changestream --namespace-name debezium --message-retention 7 --partition-count 1
 
 echo "gathering eventhubs info"
 export EH_NAME=`az eventhubs namespace list -g dbsync1 --query '[].name' -o tsv`

@@ -42,7 +42,7 @@ namespace Debezium.Consumer
 
         public async Task ProcessMessages(CancellationToken cancellationToken)
         {
-            Console.WriteLine("The application will now start to listen for incoming message.");
+            Console.WriteLine("The application will now start to listen for incoming messages.");
 
             var startPosition = EventPosition.FromStart();
             if (ConfigurationManager.AppSettings["LastOffset"] != null)
@@ -52,7 +52,8 @@ namespace Debezium.Consumer
                 Console.WriteLine($"Starting from Offset: {lastOffset}");
             }
 
-            var runtimeInfo = await client.GetRuntimeInformationAsync();
+            var runtimeInfo = await client.GetRuntimeInformationAsync();            
+            
             Console.WriteLine("Creating receiver handlers...");
             var utcNow = DateTime.UtcNow;
             //var startPosition = EventPosition.FromEnqueuedTime(utcNow);
@@ -62,7 +63,7 @@ namespace Debezium.Consumer
                 {
                     var receiver = client.CreateReceiver("$Default", pid, startPosition);
                     Console.WriteLine("Created receiver for partition '{0}'.", pid);
-                    receiver.SetReceiveHandler(new PartitionReceiver(pid));
+                    receiver.SetReceiveHandler(new PartitionReceiver(pid), invokeWhenNoEvents: true);
                     return receiver;
                 })
                 .ToList();
@@ -77,9 +78,6 @@ namespace Debezium.Consumer
             }
             finally
             {
-                // Save Offsets (TODO)            
-                // receivers[0].RuntimeInfo.LastEnqueuedOffset
-
                 // Clean up nicely.
                 await Task.WhenAll(
                     receivers.Select(receiver => receiver.CloseAsync())

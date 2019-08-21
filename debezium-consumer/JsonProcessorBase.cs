@@ -127,7 +127,8 @@ namespace Debezium.Consumer
                     }                    
 
                     int rows = conn.Execute(command, dp, commandType: CommandType.Text);
-
+                    //int rows = 0;
+                    
                     Console.WriteLine($"Affected Rows: {rows}");
                     Utils.SaveSetting("LastLSN", "0x" + SourceMetadata.CommitLSN.ToString("X"));                 
                 }                

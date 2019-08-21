@@ -30,6 +30,12 @@ namespace Debezium.Consumer
 
         public async Task ProcessEventsAsync(IEnumerable<EventData> events)
         {
+            if (events == null) 
+            {
+                Console.WriteLine("No more events to process.");
+                return;
+            }
+
             foreach (var e in events)
             {
                 string body = Encoding.UTF8.GetString(e.Body);
@@ -38,12 +44,23 @@ namespace Debezium.Consumer
                 Console.WriteLine($"Offset: {e.SystemProperties.Offset}");
 
                 var json = JObject.Parse(body);
-                var operation = json["payload"]["op"].ToString();
+                
+                if (json?["payload"] == null) {
+                    Console.WriteLine("Unknown json format, skipping.");
+                    continue;
+                }
+
+                var operation = json?["payload"]?["op"]?.ToString();
+
+                if (operation == null) {
+                    Console.WriteLine("Unknown operation, skipping.");
+                    continue;
+                }
 
                 var processor = JsonProcessorFactory.CreatePayloadProcessor(operation, json);
                 processor.Process();
 
-                Utils.SaveSetting("LastOffset", e.SystemProperties.Offset);
+                Utils.SaveSetting("LastOffset", e.SystemProperties.Offset);                
 
                 await Task.Yield();
             }

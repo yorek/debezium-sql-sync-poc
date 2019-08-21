@@ -3,7 +3,7 @@
   <appSettings>
     <add key="EventHubConnectionString" value="Endpoint=;EntityPath="/>
     <add key="AzureSQLConnectionString" value=""/>
-    <add key="BaseLSN" value="0x"/>
+    <add key="BaseLSN" value="0x0"/>
   </appSettings>
 </configuration>
 
