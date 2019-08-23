@@ -1,0 +1,22 @@
+{
+    "name": "tpch",
+    "config": {
+        "connector.class" : "io.debezium.connector.sqlserver.SqlServerConnector",
+        "database.hostname" : "51.143.5.152",
+        "database.port" : "1433",
+        "database.user" : "debezium-tpch",
+        "database.password" : "debezium-TPCH-P@ssw0rd!",
+        "database.dbname" : "tpch1gb",
+        "database.server.name" : "laptop",
+        "tasks.max" : "1",                
+	    "snapshot.mode": "initial_schema_only",
+        "decimal.handling.mode": "string",
+        "transforms": "Reroute",
+        "transforms.Reroute.type": "io.debezium.transforms.ByLogicalTableRouter",
+        "transforms.Reroute.topic.regex": "(.*)",
+        "transforms.Reroute.topic.replacement": "debezium_changestream",          
+        "tombstones.on.delete": false,
+        "database.history":"io.debezium.relational.history.MemoryDatabaseHistory",
+		"poll.interval.ms":1000
+    }
+}
