@@ -16,7 +16,6 @@
         "transforms.Reroute.topic.regex": "(.*)",
         "transforms.Reroute.topic.replacement": "debezium_changestream",          
         "tombstones.on.delete": false,
-        "database.history":"io.debezium.relational.history.MemoryDatabaseHistory",
-		"poll.interval.ms":1000
+        "database.history":"io.debezium.relational.history.MemoryDatabaseHistory"
     }
 }
