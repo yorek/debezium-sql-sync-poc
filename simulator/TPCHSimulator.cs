@@ -2,7 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Data;
+using Microsoft.Data.SqlClient;
 using Dapper;
 using Bogus;
 using System.Linq;
@@ -28,7 +29,7 @@ namespace Simulator
         private readonly int SimulatorId;
 
         public TPCHSimulator(int id, string connectionString)        
-        {
+        {            
             Randomizer.Seed = new Random();
 
             this.CustomerId = MinCustomerId;
