@@ -3,7 +3,7 @@
 # Strict mode, fail on any error
 set -euo pipefail
 
-export DEBEZIUM_VERSION=0.10
+export DEBEZIUM_VERSION=1.1
 
 echo "deploying resource group"
 az group create -n dbsync -l WestUS2

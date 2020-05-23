@@ -12,19 +12,18 @@ namespace Simulator
     {
         static void Main(string[] args)
         {
-            DotNetEnv.Env.Load();
-            string connectionString = Environment.GetEnvironmentVariable("ConnectionString");
+            Console.WriteLine($"Creating simulator...");
+            var simulator = new TPCHSimulator();
+            Console.WriteLine($"Done.");
 
-            int taskCount = 1;
-
-            var tasks = new List<Task>();
-
+            int taskCount = 5;
             Console.WriteLine($"Creating {taskCount} simulator instances");
+            var tasks = new List<Task>();
             foreach(var n in Enumerable.Range(1, taskCount))
             {   
-                var simulator = new TPCHSimulator(n, connectionString);
                 tasks.Add(Task.Run(() => simulator.SimulateActivity()));
             }
+
             Console.WriteLine($"Done. Ctrl+C to terminate.");
 
             Task.WaitAll(tasks.ToArray());            
