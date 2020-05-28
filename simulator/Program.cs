@@ -16,7 +16,7 @@ namespace Simulator
             var simulator = new TPCHSimulator();
             Console.WriteLine($"Done.");
 
-            int taskCount = 5;
+            int taskCount = 15;
             Console.WriteLine($"Creating {taskCount} simulator instances");
             var tasks = new List<Task>();
             foreach(var n in Enumerable.Range(1, taskCount))

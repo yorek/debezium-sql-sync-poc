@@ -47,6 +47,8 @@ namespace Simulator
             Randomizer.Seed = new Random();
 
             this.SQLConnectionString = Environment.GetEnvironmentVariable("ConnectionString");;
+            var builder = new SqlConnectionStringBuilder(this.SQLConnectionString);
+            Console.WriteLine($"Connecting to {builder.InitialCatalog}@{builder.DataSource}...");
 
             using (var conn = new SqlConnection(SQLConnectionString))
             {
@@ -71,13 +73,13 @@ namespace Simulator
 
         public void SimulateActivity()
         {            
-            var simulate = Simulate.Order;
+            var simulate = Simulate.Customer;
 
             while (true)
             {
                 var num = (int)(Math.Round(Random.NextDouble() * 1000, 0));                        
                 if (num > 000 && num <= 200) simulate = Simulate.Customer;
-                if (num > 200 && num <= 1000) simulate = Simulate.Order;
+                //if (num > 200 && num <= 1000) simulate = Simulate.Order;
 
                 if (simulate == Simulate.Customer)
                 {
