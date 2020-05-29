@@ -24,6 +24,10 @@ namespace Simulator
 
         private readonly Faker Faker = new Faker();
 
+        private readonly int UpdateAfter = 50;
+        
+        private readonly int DeleteAfter = 50;
+
         private readonly int StartingCustomerId = 0;
 
         private readonly int StartingOrderId = 0;
@@ -71,43 +75,54 @@ namespace Simulator
             }
         }      
 
-        public void SimulateActivity()
+        public void SimulateActivity(CancellationToken ct)
         {            
+            ct.ThrowIfCancellationRequested();
+
             var simulate = Simulate.Customer;
 
             while (true)
             {
-                var num = (int)(Math.Round(Random.NextDouble() * 1000, 0));                        
-                if (num > 000 && num <= 200) simulate = Simulate.Customer;
-                //if (num > 200 && num <= 1000) simulate = Simulate.Order;
-
-                if (simulate == Simulate.Customer)
-                {
-                    num = (int)(Math.Round(Random.NextDouble() * 1000, 0));                
-
-                    if (num > 000 && num <= 600) CreateCustomer();
-                    if (num > 600 && num <= 900) UpdateCustomer();
-                    if (num > 900 && num <= 1000) DeleteCustomer();
+                if (ct.IsCancellationRequested) {
+                    Log("Cancelled");
+                    break;
                 }
 
-                if (simulate == Simulate.Order) {
-                    num = (int)(Math.Round(Random.NextDouble() * 1000, 0));                
+                try {
+                    var num = (int)(Math.Round(Random.NextDouble() * 1000, 0));                        
+                    if (num > 000 && num <= 200) simulate = Simulate.Customer;
+                    if (num > 200 && num <= 1000) simulate = Simulate.Order;
 
-                    if (num > 000 && num <= 700) CreateOrder();
-                    if (num > 700 && num <= 900) UpdateOrder();
-                    if (num > 900 && num <= 1000) DeleteOrder();
+                    if (simulate == Simulate.Customer)
+                    {
+                        num = (int)(Math.Round(Random.NextDouble() * 1000, 0));                
+
+                        if (num > 000 && num <= 600) CreateCustomer();
+                        if (num > 600 && num <= 900) UpdateCustomer();
+                        if (num > 900 && num <= 1000) DeleteCustomer();
+                    }
+
+                    if (simulate == Simulate.Order) {
+                        num = (int)(Math.Round(Random.NextDouble() * 1000, 0));                
+
+                        if (num > 000 && num <= 700) CreateOrder();
+                        if (num > 700 && num <= 900) UpdateOrder();
+                        if (num > 900 && num <= 1000) DeleteOrder();
+                    }
+                    
+                    /*
+                    if (num > 700 && num <= 900) CreateSupplier();
+                    if (num > 700 && num <= 900) UpdateSupplier();
+                    if (num > 700 && num <= 900) DeleteSupplier();
+                    if (num > 700 && num <= 900) CreatePart();
+                    if (num > 700 && num <= 900) UpdatePart();
+                    if (num > 700 && num <= 900) DeletePart();
+                    */
+                    var sleepMs = (int)(Math.Round(Random.NextDouble() * 3000, 0));
+                    Thread.Sleep(500 + sleepMs);
+                } catch (SqlException e) {
+                    Log(e.Message);
                 }
-                
-                /*
-                if (num > 700 && num <= 900) CreateSupplier();
-                if (num > 700 && num <= 900) UpdateSupplier();
-                if (num > 700 && num <= 900) DeleteSupplier();
-                if (num > 700 && num <= 900) CreatePart();
-                if (num > 700 && num <= 900) UpdatePart();
-                if (num > 700 && num <= 900) DeletePart();
-                */
-                var sleepMs = (int)(Math.Round(Random.NextDouble() * 3000, 0));
-                Thread.Sleep(500 + sleepMs);
             }
         }
 
@@ -204,6 +219,9 @@ namespace Simulator
 
         private void UpdateCustomer()
         {
+            // Allow updates only after "x" new customers have been inserted
+            if ((CustomerId - StartingCustomerId) < UpdateAfter) return;
+
             var cid = Faker.Random.Int(StartingCustomerId, CustomerId);
 
             Log($"Updating Customer {cid}...");
@@ -227,6 +245,9 @@ namespace Simulator
 
         private void UpdateOrder()
         {
+            // Allow updates only after "x" new orders have been inserted
+            if ((OrderId - StartingOrderId) < UpdateAfter) return;
+
             var oid = Faker.Random.Int(StartingOrderId, OrderId);
 
             using (var conn = new SqlConnection(SQLConnectionString))
@@ -337,6 +358,9 @@ namespace Simulator
 
         private void DeleteCustomer()
         {
+            // Allow deletes only after "x" new customers have been inserted
+            if ((CustomerId - StartingCustomerId) < DeleteAfter) return;
+
             var cid = Faker.Random.Int(StartingCustomerId, CustomerId);
 
             Log($"Deleting Customer {cid}...");
@@ -357,6 +381,9 @@ namespace Simulator
 
         private void DeleteOrder()
         {
+            // Allow deletes only after "x" new orders have been inserted
+            if ((OrderId - StartingOrderId) < DeleteAfter) return;
+
             var oid = Faker.Random.Int(StartingOrderId, OrderId);
 
             Log($"Deleting Order {oid}...");

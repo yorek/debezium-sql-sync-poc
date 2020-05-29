@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using Dapper;
@@ -19,14 +20,40 @@ namespace Simulator
             int taskCount = 15;
             Console.WriteLine($"Creating {taskCount} simulator instances");
             var tasks = new List<Task>();
+            var cts = new CancellationTokenSource();
+            var ct = cts.Token;            
             foreach(var n in Enumerable.Range(1, taskCount))
             {   
-                tasks.Add(Task.Run(() => simulator.SimulateActivity()));
+                tasks.Add(Task.Run(() => simulator.SimulateActivity(ct)));
             }
 
-            Console.WriteLine($"Done. Ctrl+C to terminate.");
+            while(true)
+            {
+                var c = Console.ReadKey(true);
+                if (c.KeyChar == 'c') { 
+                    Console.WriteLine("Stopping simulator tasks...");
+                    cts.Cancel();
+                    break;
+                }
+            } 
 
-            Task.WaitAll(tasks.ToArray());            
+            try 
+            {
+                Task.WaitAll(tasks.ToArray());            
+            } 
+            catch (Exception e)
+            {
+                var le = e;                
+                while(le != null)
+                {
+                    Console.WriteLine(le.Message);
+                    le = le.InnerException;
+                }
+            }
+            finally
+            {
+                cts.Dispose();
+            }            
         }
     }
 }
