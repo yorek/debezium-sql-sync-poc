@@ -46,16 +46,15 @@ namespace Simulator
 
         public TPCHSimulator()
         {
-            DotNetEnv.Env.Load();
-
             Randomizer.Seed = new Random();
 
-            this.SQLConnectionString = Environment.GetEnvironmentVariable("ConnectionString");;
+            this.SQLConnectionString = Environment.GetEnvironmentVariable("ConnectionString");
             var builder = new SqlConnectionStringBuilder(this.SQLConnectionString);
             Console.WriteLine($"Connecting to {builder.InitialCatalog}@{builder.DataSource}...");
 
             using (var conn = new SqlConnection(SQLConnectionString))
             {
+                Console.WriteLine("Loading starting values...");
                 var result = conn.QuerySingle(@"
                     select 
                         MaxUsedCustomerId = (select MAX(C_CUSTKEY) from dbo.CUSTOMER), 

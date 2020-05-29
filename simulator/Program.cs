@@ -2,10 +2,8 @@
 using System.Threading.Tasks;
 using System.Threading;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using Dapper;
-using Bogus;
 using System.Linq;
+using DotNetEnv;
 
 namespace Simulator
 {
@@ -13,12 +11,17 @@ namespace Simulator
     {
         static void Main(string[] args)
         {
+            DotNetEnv.Env.Load();
+
             Console.WriteLine($"Creating simulator...");
             var simulator = new TPCHSimulator();
-            Console.WriteLine($"Done.");
+            Console.WriteLine($"Simulator created.");
 
-            int taskCount = 15;
-            Console.WriteLine($"Creating {taskCount} simulator instances");
+            int taskCount = int.Parse(Environment.GetEnvironmentVariable("SimulatorCount") ?? "1");
+            Console.WriteLine($"Starting {taskCount} simulator instances...");
+            Console.WriteLine($"Press 'c' to terminate simulators.");
+            Console.WriteLine($"Simulation will start in 5 seconds...");
+            Thread.Sleep(5000);
             var tasks = new List<Task>();
             var cts = new CancellationTokenSource();
             var ct = cts.Token;            
@@ -54,6 +57,8 @@ namespace Simulator
             {
                 cts.Dispose();
             }            
+
+            Console.WriteLine("Finished.");
         }
     }
 }
