@@ -44,6 +44,8 @@ namespace Simulator
 
         private int SupplierId = 0;
 
+        private object LockHolder = new object();
+
         public TPCHSimulator()
         {
             Randomizer.Seed = new Random();
@@ -117,7 +119,7 @@ namespace Simulator
                     if (num > 700 && num <= 900) UpdatePart();
                     if (num > 700 && num <= 900) DeletePart();
                     */
-                    var sleepMs = (int)(Math.Round(Random.NextDouble() * 3000, 0));
+                    var sleepMs = (int)(Math.Round(Random.NextDouble() * 1000, 0));
                     Thread.Sleep(500 + sleepMs);
                 } catch (SqlException e) {
                     Log(e.Message);
@@ -129,7 +131,7 @@ namespace Simulator
         {
             var cid = Interlocked.Increment(ref CustomerId);
 
-            Log($"Creating Customer {CustomerId}...");
+            Log($"Creating Customer {CustomerId}...", ConsoleColor.Green);
 
             using (var conn = new SqlConnection(SQLConnectionString))
             {
@@ -159,7 +161,7 @@ namespace Simulator
                 conn.Open();
                 using (var tran = conn.BeginTransaction())
                 {                    
-                    Log($"Creating Order {oid}...");
+                    Log($"Creating Order {oid}...", ConsoleColor.Green);
 
                     var affectedRows = conn.Execute(
                         @"INSERT INTO dbo.ORDERS ([O_ORDERKEY], [O_CUSTKEY], [O_ORDERSTATUS], [O_TOTALPRICE], [O_ORDERDATE], [O_ORDERPRIORITY], [O_CLERK], [O_SHIPPRIORITY], [O_COMMENT])
@@ -181,7 +183,7 @@ namespace Simulator
 
                     var num = 1 + (int)(Math.Round(Random.NextDouble() * 20, 0));                
 
-                    Log($"Creating {num} LineItems for Order {oid}...");
+                    Log($"Creating {num} LineItems for Order {oid}...", ConsoleColor.Green);
                     
                     for(int lin=0; lin<num; lin++)
                     {
@@ -223,7 +225,7 @@ namespace Simulator
 
             var cid = Faker.Random.Int(StartingCustomerId, CustomerId);
 
-            Log($"Updating Customer {cid}...");
+            Log($"Updating Customer {cid}...", ConsoleColor.Yellow);
 
             using (var conn = new SqlConnection(SQLConnectionString))
             {
@@ -254,7 +256,7 @@ namespace Simulator
                 conn.Open();
                 using (var tran = conn.BeginTransaction())
                 {                    
-                    Log($"Updating Order {oid}...");
+                    Log($"Updating Order {oid}...", ConsoleColor.Yellow);
 
                     var lineCount = conn.ExecuteScalar<int>("SELECT MAX(L_LINENUMBER) FROM dbo.LINEITEM WHERE L_ORDERKEY = @ORDERKEY",  new { @ORDERKEY = oid }, tran);
 
@@ -276,7 +278,7 @@ namespace Simulator
                         tran
                     );
 
-                    Log($"Updating Order {oid}: Updating LineItems");    
+                    Log($"Updating Order {oid}: Updating LineItems", ConsoleColor.Yellow);    
                     var lineItemsUpdate = Faker.Random.ArrayElements(Enumerable.Range(1, lineCount).ToArray(), Faker.Random.Int(0, lineCount));
                     foreach(var lin in lineItemsUpdate)
                     {
@@ -307,7 +309,7 @@ namespace Simulator
                         );
                     }
 
-                    Log($"Updating Order {oid}: Deleting LineItems");                        
+                    Log($"Updating Order {oid}: Deleting LineItems", ConsoleColor.Yellow);                        
                     var lineItemsDelete = Faker.Random.ArrayElements(Enumerable.Range(1, lineCount).ToArray(), Faker.Random.Int(0, lineCount));
                     conn.Execute(@"
                         DELETE dbo.LINEITEM                             
@@ -320,7 +322,7 @@ namespace Simulator
                             transaction: tran
                         );                    
 
-                    Log($"Updating Order {oid}: Adding LineItems");                        
+                    Log($"Updating Order {oid}: Adding LineItems", ConsoleColor.Yellow);                        
                     var num = lineCount + (int)(Math.Round(Random.NextDouble() * 20, 0));                
                     for(int lin=0; lin<num; lin++)
                     {
@@ -362,7 +364,7 @@ namespace Simulator
 
             var cid = Faker.Random.Int(StartingCustomerId, CustomerId);
 
-            Log($"Deleting Customer {cid}...");
+            Log($"Deleting Customer {cid}...", ConsoleColor.Red);
 
             using (var conn = new SqlConnection(SQLConnectionString))
             {
@@ -385,7 +387,7 @@ namespace Simulator
 
             var oid = Faker.Random.Int(StartingOrderId, OrderId);
 
-            Log($"Deleting Order {oid}...");
+            Log($"Deleting Order {oid}...", ConsoleColor.Red);
 
             using (var conn = new SqlConnection(SQLConnectionString))
             {
@@ -408,9 +410,14 @@ namespace Simulator
                 return text;
         }
 
-        private void Log(string text)
+        private void Log(string text, ConsoleColor? color = null)
         {
-            Console.WriteLine($"{DateTime.Now:o}|{Task.CurrentId:000}|{text}");
+            lock (LockHolder)
+            {
+                if (color.HasValue) Console.ForegroundColor = color.Value;
+                Console.WriteLine($"{DateTime.Now:o}|{Task.CurrentId:000}|{text}");
+                Console.ResetColor();
+            }
         }
     }
 }
